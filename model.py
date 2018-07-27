@@ -17,6 +17,11 @@ def conv_out_size_same(size, stride):
 #  - Remove the cropping, make the output width/height always be the input w/h.
 #  - Chop out the data loading parts and replace them with a FITS loader
 #  - Rename some of these arguments to be a bit less cryptic
+# 
+#  - self.data is just a list of image filenames
+#  - sample_num is the number of images to take from the data set
+#    - it's randomised so should be a different set each time
+#    - it could be the full set?
 
 class DCGAN(object):
   def __init__(self, sess, input_height, input_width, crop=False,
@@ -76,20 +81,16 @@ class DCGAN(object):
     self.checkpoint_dir = checkpoint_dir
     self.data_dir = data_dir
 
-    if self.dataset_name == 'mnist':
-      self.data_X, self.data_y = self.load_mnist()
-      self.c_dim = self.data_X[0].shape[-1]
+    data_path = os.path.join(self.data_dir, self.dataset_name, self.input_fname_pattern)
+    self.data = glob(data_path)
+    if len(self.data) == 0:
+      raise Exception("[!] No data found in '" + data_path + "'")
+    np.random.shuffle(self.data)
+    imreadImg = imread(self.data[0])
+    if len(imreadImg.shape) >= 3: #check if image is a non-grayscale image by checking channel number
+      self.c_dim = imread(self.data[0]).shape[-1]
     else:
-      data_path = os.path.join(self.data_dir, self.dataset_name, self.input_fname_pattern)
-      self.data = glob(data_path)
-      if len(self.data) == 0:
-        raise Exception("[!] No data found in '" + data_path + "'")
-      np.random.shuffle(self.data)
-      imreadImg = imread(self.data[0])
-      if len(imreadImg.shape) >= 3: #check if image is a non-grayscale image by checking channel number
-        self.c_dim = imread(self.data[0]).shape[-1]
-      else:
-        self.c_dim = 1
+      self.c_dim = 1
 
     self.grayscale = (self.c_dim == 1)
 
@@ -173,23 +174,19 @@ class DCGAN(object):
 
     sample_z = np.random.uniform(-1, 1, size=(self.sample_num , self.z_dim))
     
-    if config.dataset == 'mnist':
-      sample_inputs = self.data_X[0:self.sample_num]
-      sample_labels = self.data_y[0:self.sample_num]
+    sample_files = self.data[0:self.sample_num]
+    sample = [
+        get_image(sample_file,
+                  input_height=self.input_height,
+                  input_width=self.input_width,
+                  resize_height=self.output_height,
+                  resize_width=self.output_width,
+                  crop=self.crop,
+                  grayscale=self.grayscale) for sample_file in sample_files]
+    if (self.grayscale):
+      sample_inputs = np.array(sample).astype(np.float32)[:, :, :, None]
     else:
-      sample_files = self.data[0:self.sample_num]
-      sample = [
-          get_image(sample_file,
-                    input_height=self.input_height,
-                    input_width=self.input_width,
-                    resize_height=self.output_height,
-                    resize_width=self.output_width,
-                    crop=self.crop,
-                    grayscale=self.grayscale) for sample_file in sample_files]
-      if (self.grayscale):
-        sample_inputs = np.array(sample).astype(np.float32)[:, :, :, None]
-      else:
-        sample_inputs = np.array(sample).astype(np.float32)
+      sample_inputs = np.array(sample).astype(np.float32)
   
     counter = 1
     start_time = time.time()
@@ -201,90 +198,47 @@ class DCGAN(object):
       print(" [!] Load failed...")
 
     for epoch in xrange(config.epoch):
-      if config.dataset == 'mnist':
-        batch_idxs = min(len(self.data_X), config.train_size) // config.batch_size
-      else:      
-        self.data = glob(os.path.join(
-          config.data_dir, config.dataset, self.input_fname_pattern))
-        np.random.shuffle(self.data)
-        batch_idxs = min(len(self.data), config.train_size) // config.batch_size
+      self.data = glob(os.path.join(
+        config.data_dir, config.dataset, self.input_fname_pattern))
+      np.random.shuffle(self.data)
+      batch_idxs = min(len(self.data), config.train_size) // config.batch_size
 
       for idx in xrange(0, int(batch_idxs)):
-        if config.dataset == 'mnist':
-          batch_images = self.data_X[idx*config.batch_size:(idx+1)*config.batch_size]
-          batch_labels = self.data_y[idx*config.batch_size:(idx+1)*config.batch_size]
+        batch_files = self.data[idx*config.batch_size:(idx+1)*config.batch_size]
+        batch = [
+            get_image(batch_file,
+                      input_height=self.input_height,
+                      input_width=self.input_width,
+                      resize_height=self.output_height,
+                      resize_width=self.output_width,
+                      crop=self.crop,
+                      grayscale=self.grayscale) for batch_file in batch_files]
+        if self.grayscale:
+          batch_images = np.array(batch).astype(np.float32)[:, :, :, None]
         else:
-          batch_files = self.data[idx*config.batch_size:(idx+1)*config.batch_size]
-          batch = [
-              get_image(batch_file,
-                        input_height=self.input_height,
-                        input_width=self.input_width,
-                        resize_height=self.output_height,
-                        resize_width=self.output_width,
-                        crop=self.crop,
-                        grayscale=self.grayscale) for batch_file in batch_files]
-          if self.grayscale:
-            batch_images = np.array(batch).astype(np.float32)[:, :, :, None]
-          else:
-            batch_images = np.array(batch).astype(np.float32)
+          batch_images = np.array(batch).astype(np.float32)
 
         batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]) \
               .astype(np.float32)
 
-        if config.dataset == 'mnist':
-          # Update D network
-          _, summary_str = self.sess.run([d_optim, self.d_sum],
-            feed_dict={ 
-              self.inputs: batch_images,
-              self.z: batch_z,
-              self.y:batch_labels,
-            })
-          self.writer.add_summary(summary_str, counter)
+        # Update D network
+        _, summary_str = self.sess.run([d_optim, self.d_sum],
+          feed_dict={ self.inputs: batch_images, self.z: batch_z })
+        self.writer.add_summary(summary_str, counter)
 
-          # Update G network
-          _, summary_str = self.sess.run([g_optim, self.g_sum],
-            feed_dict={
-              self.z: batch_z, 
-              self.y:batch_labels,
-            })
-          self.writer.add_summary(summary_str, counter)
+        # Update G network
+        _, summary_str = self.sess.run([g_optim, self.g_sum],
+          feed_dict={ self.z: batch_z })
+        self.writer.add_summary(summary_str, counter)
 
-          # Run g_optim twice to make sure that d_loss does not go to zero (different from paper)
-          _, summary_str = self.sess.run([g_optim, self.g_sum],
-            feed_dict={ self.z: batch_z, self.y:batch_labels })
-          self.writer.add_summary(summary_str, counter)
-          
-          errD_fake = self.d_loss_fake.eval({
-              self.z: batch_z, 
-              self.y:batch_labels
-          })
-          errD_real = self.d_loss_real.eval({
-              self.inputs: batch_images,
-              self.y:batch_labels
-          })
-          errG = self.g_loss.eval({
-              self.z: batch_z,
-              self.y: batch_labels
-          })
-        else:
-          # Update D network
-          _, summary_str = self.sess.run([d_optim, self.d_sum],
-            feed_dict={ self.inputs: batch_images, self.z: batch_z })
-          self.writer.add_summary(summary_str, counter)
+        # Run g_optim twice to make sure that d_loss does not go to zero (different from paper)
+        _, summary_str = self.sess.run([g_optim, self.g_sum],
+          feed_dict={ self.z: batch_z })
+        self.writer.add_summary(summary_str, counter)
 
-          # Update G network
-          _, summary_str = self.sess.run([g_optim, self.g_sum],
-            feed_dict={ self.z: batch_z })
-          self.writer.add_summary(summary_str, counter)
-
-          # Run g_optim twice to make sure that d_loss does not go to zero (different from paper)
-          _, summary_str = self.sess.run([g_optim, self.g_sum],
-            feed_dict={ self.z: batch_z })
-          self.writer.add_summary(summary_str, counter)
-          
-          errD_fake = self.d_loss_fake.eval({ self.z: batch_z })
-          errD_real = self.d_loss_real.eval({ self.inputs: batch_images })
-          errG = self.g_loss.eval({self.z: batch_z})
+        errD_fake = self.d_loss_fake.eval({ self.z: batch_z })
+        errD_real = self.d_loss_real.eval({ self.inputs: batch_images })
+        errG = self.g_loss.eval({self.z: batch_z})
 
         counter += 1
         print("Epoch: [%2d/%2d] [%4d/%4d] time: %4.4f, d_loss: %.8f, g_loss: %.8f" \
@@ -292,32 +246,19 @@ class DCGAN(object):
             time.time() - start_time, errD_fake+errD_real, errG))
 
         if np.mod(counter, 100) == 1:
-          if config.dataset == 'mnist':
+          try:
             samples, d_loss, g_loss = self.sess.run(
               [self.sampler, self.d_loss, self.g_loss],
               feed_dict={
                   self.z: sample_z,
                   self.inputs: sample_inputs,
-                  self.y:sample_labels,
-              }
+              },
             )
             save_images(samples, image_manifold_size(samples.shape[0]),
                   './{}/train_{:02d}_{:04d}.png'.format(config.sample_dir, epoch, idx))
             print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss)) 
-          else:
-            try:
-              samples, d_loss, g_loss = self.sess.run(
-                [self.sampler, self.d_loss, self.g_loss],
-                feed_dict={
-                    self.z: sample_z,
-                    self.inputs: sample_inputs,
-                },
-              )
-              save_images(samples, image_manifold_size(samples.shape[0]),
-                    './{}/train_{:02d}_{:04d}.png'.format(config.sample_dir, epoch, idx))
-              print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss)) 
-            except:
-              print("one pic error!...")
+          except:
+            print("one pic error!...")
 
         if np.mod(counter, 500) == 2:
           self.save(config.checkpoint_dir, counter)
@@ -463,43 +404,6 @@ class DCGAN(object):
         h2 = conv_cond_concat(h2, yb)
 
         return tf.nn.sigmoid(deconv2d(h2, [self.batch_size, s_h, s_w, self.c_dim], name='g_h3'))
-
-  def load_mnist(self):
-    data_dir = os.path.join(self.data_dir, self.dataset_name)
-    
-    fd = open(os.path.join(data_dir,'train-images-idx3-ubyte'))
-    loaded = np.fromfile(file=fd,dtype=np.uint8)
-    trX = loaded[16:].reshape((60000,28,28,1)).astype(np.float)
-
-    fd = open(os.path.join(data_dir,'train-labels-idx1-ubyte'))
-    loaded = np.fromfile(file=fd,dtype=np.uint8)
-    trY = loaded[8:].reshape((60000)).astype(np.float)
-
-    fd = open(os.path.join(data_dir,'t10k-images-idx3-ubyte'))
-    loaded = np.fromfile(file=fd,dtype=np.uint8)
-    teX = loaded[16:].reshape((10000,28,28,1)).astype(np.float)
-
-    fd = open(os.path.join(data_dir,'t10k-labels-idx1-ubyte'))
-    loaded = np.fromfile(file=fd,dtype=np.uint8)
-    teY = loaded[8:].reshape((10000)).astype(np.float)
-
-    trY = np.asarray(trY)
-    teY = np.asarray(teY)
-    
-    X = np.concatenate((trX, teX), axis=0)
-    y = np.concatenate((trY, teY), axis=0).astype(np.int)
-    
-    seed = 547
-    np.random.seed(seed)
-    np.random.shuffle(X)
-    np.random.seed(seed)
-    np.random.shuffle(y)
-    
-    y_vec = np.zeros((len(y), self.y_dim), dtype=np.float)
-    for i, label in enumerate(y):
-      y_vec[i,y[i]] = 1.0
-    
-    return X/255.,y_vec
 
   @property
   def model_dir(self):
