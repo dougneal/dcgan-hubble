@@ -4,6 +4,12 @@ Acquiring images from the Hubble Space Telescope through the Space Telescope Sci
 [MAST API](https://mast.stsci.edu/api/v0/) and feeding them to a Deep Convolutional Generative
 Adversarial Network.
 
+## Requirements
+
+ * Tensorflow
+ * A GPU
+ * An AWS account
+
 ## Usage
 
 Coming soon
