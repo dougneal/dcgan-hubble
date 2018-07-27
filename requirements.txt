@@ -1,0 +1,8 @@
+scipy
+numpy
+astropy
+requests
+pillow
+boto3
+json
+
