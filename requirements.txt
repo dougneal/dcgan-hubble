@@ -1,6 +1,7 @@
 scipy
 numpy
 astropy
+astroquery
 requests
 pillow
 boto3
