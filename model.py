@@ -8,6 +8,7 @@ import numpy as np
 from six.moves import xrange
 
 from ops import *
+from ops import BatchNorm
 from utils import *
 
 
@@ -65,18 +66,18 @@ class DCGAN(object):
         self.dfc_dim = dfc_dim
 
         # batch normalization : deals with poor initialization helps gradient flow
-        self.d_bn1 = batch_norm(name='d_bn1')
-        self.d_bn2 = batch_norm(name='d_bn2')
+        self.d_bn1 = BatchNorm(name='d_bn1')
+        self.d_bn2 = BatchNorm(name='d_bn2')
 
         if not self.y_dim:
-            self.d_bn3 = batch_norm(name='d_bn3')
+            self.d_bn3 = BatchNorm(name='d_bn3')
 
-        self.g_bn0 = batch_norm(name='g_bn0')
-        self.g_bn1 = batch_norm(name='g_bn1')
-        self.g_bn2 = batch_norm(name='g_bn2')
+        self.g_bn0 = BatchNorm(name='g_bn0')
+        self.g_bn1 = BatchNorm(name='g_bn1')
+        self.g_bn2 = BatchNorm(name='g_bn2')
 
         if not self.y_dim:
-            self.g_bn3 = batch_norm(name='g_bn3')
+            self.g_bn3 = BatchNorm(name='g_bn3')
 
         self.dataset_name = dataset_name
         self.input_fname_pattern = input_fname_pattern
