@@ -24,10 +24,10 @@ def conv_out_size_same(size, stride):
 #    - it could be the full set?
 
 class DCGAN(object):
-  def __init__(self, sess, input_height, input_width, crop=False,
-         batch_size=64, sample_num = 64, output_height, output_width,
+  def __init__(self, sess, height, width, crop=False,
+         batch_size=64, sample_num = 64,
          y_dim=None, z_dim=100, gf_dim=64, df_dim=64,
-         gfc_dim=1024, dfc_dim=1024, c_dim=3, dataset_name='default',
+         gfc_dim=1024, dfc_dim=1024, dataset_name='default',
          input_fname_pattern='*.jpg', checkpoint_dir=None, sample_dir=None, data_dir='./data'):
     """
 
@@ -40,7 +40,7 @@ class DCGAN(object):
       df_dim: (optional) Dimension of discrim filters in first conv layer. [64]
       gfc_dim: (optional) Dimension of gen units for for fully connected layer. [1024]
       dfc_dim: (optional) Dimension of discrim units for fully connected layer. [1024]
-      c_dim: (optional) Dimension of image color. For grayscale input, set to 1. [3]
+      colors: (optional) Dimension of image color. For grayscale input, set to 1. [3]
     """
     self.sess = sess
     self.crop = crop
@@ -48,10 +48,10 @@ class DCGAN(object):
     self.batch_size = batch_size
     self.sample_num = sample_num
 
-    self.input_height = input_height
-    self.input_width = input_width
-    self.output_height = output_height
-    self.output_width = output_width
+    self.input_height = height
+    self.input_width = width
+    self.output_height = height
+    self.output_width = width
 
     self.y_dim = y_dim
     self.z_dim = z_dim
@@ -88,9 +88,9 @@ class DCGAN(object):
     np.random.shuffle(self.data)
     imreadImg = imread(self.data[0])
     if len(imreadImg.shape) >= 3: #check if image is a non-grayscale image by checking channel number
-      self.c_dim = imread(self.data[0]).shape[-1]
+      self.colors = imread(self.data[0]).shape[-1]
     else:
-      self.c_dim = 1
+      self.colors = 1
 
     self.grayscale = (self.c_dim == 1)
 
