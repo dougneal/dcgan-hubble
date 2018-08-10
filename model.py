@@ -19,7 +19,7 @@ def conv_out_size_same(size, stride):
 #  - Chop out the data loading parts and replace them with a FITS loader
 #  - Rename some of these arguments to be a bit less cryptic
 #
-#  - self.data is just a list of image filenames
+#  - self.data_filenames is a list of image filenames
 #  - sample_num is the number of images to take from the data set
 #    - it's randomised so should be a different set each time
 #    - it could be the full set?
@@ -30,7 +30,7 @@ class DCGAN(object):
                  batch_size=64, sample_num=64,
                  y_dim=None, z_dim=100, gf_dim=64, df_dim=64,
                  gfc_dim=1024, dfc_dim=1024, dataset_name='default',
-                 input_fname_pattern='*.jpg', checkpoint_dir=None, sample_dir=None, data_dir='./data'):
+                 input_fname_pattern='*.fits', checkpoint_dir=None, sample_dir=None, data_dir='./data'):
         """
 
         Args:
@@ -84,22 +84,29 @@ class DCGAN(object):
         self.data_dir = data_dir
 
         data_path = os.path.join(
-            self.data_dir, self.dataset_name, self.input_fname_pattern)
-        self.data = glob(data_path)
-        if len(self.data) == 0:
+            self.data_dir,
+            self.dataset_name,
+            self.input_fname_pattern
+        )
+
+        self.data_filenames = glob(data_path)
+        if len(self.data_filenames) == 0:
             raise Exception("[!] No data found in '" + data_path + "'")
-        np.random.shuffle(self.data)
-        imreadImg = imread(self.data[0])
-        # check if image is a non-grayscale image by checking channel number
-        if len(imreadImg.shape) >= 3:
-            self.colors = imread(self.data[0]).shape[-1]
-        else:
-            self.colors = 1
 
-        self.grayscale = (self.c_dim == 1)
+        np.random.shuffle(self.data_filenames)
 
-        # if len(self.data) < self.batch_size:
-        #  raise Exception("[!] Entire dataset size is less than the configured batch_size")
+        #  imreadImg = imread(self.data_filenames[0])
+        #  # check if image is a non-grayscale image by checking channel number
+        #  if len(imreadImg.shape) >= 3:
+        #      self.colors = imread(self.data[0]).shape[-1]
+        #  else:
+        #      self.colors = 1
+
+        #  self.grayscale = (self.c_dim == 1)
+        self.grayscale = True
+
+        if len(self.data_filenames) < self.batch_size:
+            raise Exception("[!] Entire dataset size is less than the configured batch_size")
 
         self.build_model()
 
@@ -180,7 +187,7 @@ class DCGAN(object):
 
         sample_z = np.random.uniform(-1, 1, size=(self.sample_num, self.z_dim))
 
-        sample_files = self.data[0:self.sample_num]
+        sample_files = self.data_filenames[0:self.sample_num]
         sample = [
             get_image(sample_file,
                       input_height=self.input_height,
@@ -204,14 +211,14 @@ class DCGAN(object):
             print(" [!] Load failed...")
 
         for epoch in xrange(config.epoch):
-            self.data = glob(os.path.join(
+            self.data_filenames = glob(os.path.join(
                 config.data_dir, config.dataset, self.input_fname_pattern))
-            np.random.shuffle(self.data)
+            np.random.shuffle(self.data_filenames)
             batch_idxs = min(
-                len(self.data), config.train_size) // config.batch_size
+                len(self.data_filenames), config.train_size) // config.batch_size
 
             for idx in xrange(0, int(batch_idxs)):
-                batch_files = self.data[idx *
+                batch_files = self.data_filenames[idx *
                                         config.batch_size:(idx+1)*config.batch_size]
                 batch = [
                     get_image(batch_file,
