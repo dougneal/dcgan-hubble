@@ -69,11 +69,15 @@ def tf_main(_):
             sess,
             width=FLAGS.width,
             height=FLAGS.height,
+            checkpoint_dir=FLAGS.checkpoint_dir,
+            sample_dir=FLAGS.sample_dir,
+            batch_size=FLAGS.batch_size,
+            sample_num=FLAGS.batch_size,
         )
 
         # this is the show_all_variables() function in upstream (model.py)
         model_vars = tf.trainable_variables()
-        tensorflow.contrib.slim.model_analyzer.analyze_vars(
+        tf.contrib.slim.model_analyzer.analyze_vars(
             model_vars, print_info=True)
 
         if FLAGS.train:
