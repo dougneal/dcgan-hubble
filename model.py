@@ -10,7 +10,7 @@ from six.moves import xrange
 from ops import *
 from ops import BatchNorm
 from utils import *
-
+from astro_utils import get_scaled_fits_image
 
 def conv_out_size_same(size, stride):
     return int(math.ceil(float(size) / float(stride)))
@@ -105,6 +105,7 @@ class DCGAN(object):
 
         #  self.grayscale = (self.c_dim == 1)
         self.grayscale = True
+        self.c_dim = 1
 
         if len(self.data_filenames) < self.batch_size:
             raise Exception("[!] Entire dataset size is less than the configured batch_size")
@@ -189,14 +190,9 @@ class DCGAN(object):
         sample_z = np.random.uniform(-1, 1, size=(self.sample_num, self.z_dim))
 
         sample_files = self.data_filenames[0:self.sample_num]
-        sample = [
-            get_image(sample_file,
-                      input_height=self.input_height,
-                      input_width=self.input_width,
-                      resize_height=self.output_height,
-                      resize_width=self.output_width,
-                      crop=self.crop,
-                      grayscale=self.grayscale) for sample_file in sample_files]
+        # This is where we specify resize parameters - removed for now
+        sample = [get_scaled_fits_image(sample_file) for sample_file in sample_files]
+
         if (self.grayscale):
             sample_inputs = np.array(sample).astype(np.float32)[:, :, :, None]
         else:
@@ -212,8 +208,6 @@ class DCGAN(object):
             print(" [!] Load failed...")
 
         for epoch in xrange(config.epoch):
-            self.data_filenames = glob(os.path.join(
-                config.data_dir, config.dataset, self.input_fname_pattern))
             np.random.shuffle(self.data_filenames)
             batch_idxs = min(
                 len(self.data_filenames), config.train_size) // config.batch_size
@@ -221,14 +215,9 @@ class DCGAN(object):
             for idx in xrange(0, int(batch_idxs)):
                 batch_files = self.data_filenames[idx *
                                         config.batch_size:(idx+1)*config.batch_size]
-                batch = [
-                    get_image(batch_file,
-                              input_height=self.input_height,
-                              input_width=self.input_width,
-                              resize_height=self.output_height,
-                              resize_width=self.output_width,
-                              crop=self.crop,
-                              grayscale=self.grayscale) for batch_file in batch_files]
+                # This is where we specify resize parameters - removed for now
+                batch = [get_scaled_fits_image(batch_file) for batch_file in batch_files]
+
                 if self.grayscale:
                     batch_images = np.array(batch).astype(
                         np.float32)[:, :, :, None]
