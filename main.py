@@ -86,9 +86,14 @@ def tf_main(_):
             if not dcgan.load(FLAGS.checkpoint_dir)[0]:
                 raise Exception("Model needs training first")
 
-        # I think this is where the magic happens?
-        visualize(sess, dcgan, FLAGS, 1)
+        ## I think this is where the magic happens?
+        #visualize(sess, dcgan, FLAGS, 0)
 
+        # This is copied from various places in utils.py. Still need to fully understand what's going on.
+        z_sample = numpy.random.uniform(-0.5, 0.5, size=(FLAGS.batch_size, dcgan.z_dim))
+        samples = sess.run(dcgan.sampler, feed_dict={dcgan.z: z_sample})
+        images = (samples + 1.0)/2.0
+        IPython.embed()
 
 if __name__ == '__main__':
     if not tf.test.is_built_with_cuda():
