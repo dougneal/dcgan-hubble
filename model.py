@@ -31,7 +31,7 @@ class DCGAN(object):
                  batch_size=64, sample_num=64,
                  y_dim=None, z_dim=100, gf_dim=64, df_dim=64,
                  gfc_dim=1024, dfc_dim=1024, dataset_name='default',
-                 input_fname_pattern='*.fits', checkpoint_dir=None, sample_dir=None, data_dir='./data'):
+                 input_fname_pattern='*.fits', checkpoint_dir=None, sample_dir=None, data_dir='./data', logs_dir='./logs'):
         """
 
         Args:
@@ -83,6 +83,7 @@ class DCGAN(object):
         self.input_fname_pattern = input_fname_pattern
         self.checkpoint_dir = checkpoint_dir
         self.data_dir = data_dir
+        self.logs_dir = logs_dir
 
         data_path = os.path.join(
             self.data_dir,
@@ -185,7 +186,7 @@ class DCGAN(object):
                                     self.G_sum, self.d_loss_fake_sum, self.g_loss_sum])
         self.d_sum = merge_summary(
             [self.z_sum, self.d_sum, self.d_loss_real_sum, self.d_loss_sum])
-        self.writer = SummaryWriter("./logs", self.sess.graph)
+        self.writer = SummaryWriter(self.logs_dir, self.sess.graph)
 
         sample_z = np.random.uniform(-1, 1, size=(self.sample_num, self.z_dim))
 
