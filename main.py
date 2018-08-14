@@ -6,7 +6,8 @@ import numpy
 import pprint
 
 from model import DCGAN
-from utils import visualize
+#from utils import visualize
+import IPython
 
 import tensorflow as tf
 
@@ -35,6 +36,8 @@ flags.DEFINE_string("checkpoint_dir", "checkpoint",
 flags.DEFINE_string("data_dir", "./data", "Root directory of dataset [data]")
 flags.DEFINE_string("sample_dir", "samples",
                     "Directory name to save the image samples [samples]")
+flags.DEFINE_string("logs_dir", "logs",
+                    "Directory name to save the logs [logs]")
 
 # These look fine
 flags.DEFINE_boolean(
@@ -61,6 +64,9 @@ def tf_main(_):
     if not os.path.exists(FLAGS.sample_dir):
         os.makedirs(FLAGS.sample_dir)
 
+    if not os.path.exists(FLAGS.logs_dir):
+        os.makedirs(FLAGS.logs_dir)
+
     run_config = tf.ConfigProto()
     run_config.gpu_options.allow_growth = True  # no clue
 
@@ -71,6 +77,7 @@ def tf_main(_):
             height=FLAGS.height,
             checkpoint_dir=FLAGS.checkpoint_dir,
             sample_dir=FLAGS.sample_dir,
+            logs_dir=FLAGS.logs_dir,
             batch_size=FLAGS.batch_size,
             sample_num=FLAGS.batch_size,
         )
