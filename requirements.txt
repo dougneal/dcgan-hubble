@@ -1,5 +1,7 @@
 scipy
 numpy
+matplotlib
+scikit-image
 astropy
 astroquery
 requests
