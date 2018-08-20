@@ -3,7 +3,7 @@ numpy
 matplotlib
 scikit-image
 astropy
-astroquery
+https://github.com/astropy/astroquery/archive/master.zip
 requests
 pillow
 boto3
