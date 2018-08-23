@@ -109,15 +109,21 @@ class AstroLoader:
                 return plane.data
 
     def cut_into_tiles(self, image):
+        divisions = numpy.log2(self.tiles_per_raw_image).astype(numpy.int)
+        # Round down
+        tile_height, tile_width = numpy.floor(image.shape / divisions).astype(numpy.int)
+        crop_height = tile_height * divisions
+        crop_width = tile_width * divisions
+        image = image[0:crop_height, 0:crop_width]
         image_height, image_width = image.shape
-        tile_height, tile_width = image.shape / numpy.log2(self.tiles_per_raw_image)
+
         tiles = []
 
         for tilenum in range(self.tiles_per_raw_image):
-            left = int((tile_width * tilenum) % image_width)
-            right = int(((tile_width * (tilenum + 1)) - 1) % image_width)
-            top = int((tile_height * tilenum) % image_height)
-            bottom = int(((tile_height * (tilenum + 1)) - 1) % image_height)
+            left = (tile_width * tilenum) % image_width
+            right = ((tile_width * (tilenum + 1)) - 1) % image_width
+            top = (tile_height * tilenum) % image_height
+            bottom = ((tile_height * (tilenum + 1)) - 1) % image_height
 
             tiles.append(image[top:bottom, left:right])
 
@@ -139,4 +145,4 @@ class AstroLoader:
         self.buffer_condition.notify()
         self.buffer_condition.release()
 
-        return batch
+        return numpy.array(batch, dtype=numpy.float32)
