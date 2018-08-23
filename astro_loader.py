@@ -2,7 +2,6 @@ import os.path
 import numpy
 import numpy.random
 import boto3
-#import IPython
 import threading
 import random
 
@@ -21,8 +20,8 @@ class ZMaxInterval(ZScaleInterval):
 
 class AstroLoader:
     def __init__(self):
-        self.tiles_per_raw_image = 16
-        self.preload = 4
+        self.tiles_per_raw_image = 256
+        self.preload = 8
         self.s3 = boto3.client('s3')
         self.zmax = ZMaxInterval()
         self.logstretch = LogStretch()
@@ -57,16 +56,25 @@ class AstroLoader:
         while not self.done:
             self.buffer_condition.acquire()
 
-            buffer_space = (self.tiles_per_raw_image * self.preload) - len(self.tile_buffer)
-            if buffer_space == 0:
-                print("Feeder: buffer full, waiting")
+            buffer_max = self.tiles_per_raw_image * self.preload
+            buffer_free = buffer_max - len(self.tile_buffer)
+            if buffer_free < self.tiles_per_raw_image:
+                print("Feeder: buffer full, waiting (buffer_free = {0}, buffer_max = {1})".format(buffer_free, buffer_max))
                 self.buffer_condition.wait()
-                print("Feeder: continuing")
+                if self.done:
+                    return
+                else:
+                    continue
 
-            images = self.images(self.load_from_s3(self.select_random()))
-            new_tiles = []
-            for i in images:
-                new_tiles.extend(self.cut_into_tiles(i))
+            print("Feeder: fetching")
+
+            new_tiles = self.cut_into_tiles(
+                self.image(
+                    self.load_from_s3(
+                        self.select_random()
+                    )
+                )
+            )
 
             for t in range(len(new_tiles)):
                 new_tiles[t] = self.stretch(new_tiles[t])
@@ -79,7 +87,10 @@ class AstroLoader:
             self.buffer_condition.release()
 
     def select_random(self):
-        return self.files[numpy.random.randint(0, len(self.files))]
+        file_num = numpy.random.randint(0, len(self.files))
+        file_name = self.files[file_num]
+        numpy.delete(self.files, file_num)
+        return file_name
 
     def load_from_s3(self, key):
         print("Downloading {0}".format(key))
@@ -91,8 +102,11 @@ class AstroLoader:
         )
         return fits.open('tmp.fits')
 
-    def images(self, fits):
-        return tuple([plane.data for plane in fits if plane.name == 'SCI'])
+    def image(self, fits):
+        # Just use the first one
+        for plane in fits:
+            if plane.name == 'SCI':
+                return plane.data
 
     def cut_into_tiles(self, image):
         image_height, image_width = image.shape
@@ -113,14 +127,9 @@ class AstroLoader:
         return self.logstretch(self.zmax(image))
 
     def get_tiles(self, batch_size=32):
-        if batch_size % self.tiles_per_raw_image != 0:
-            raise Exception("Batch size must be a multiple of {0}".format(
-                self.tiles_per_raw_image
-            ))
-
         batch = []
         self.buffer_condition.acquire()
-        if len(self.tile_buffer) < self.tiles_per_raw_image * self.preload:
+        if len(self.tile_buffer) < (self.tiles_per_raw_image * (self.preload - 1)):
             print("Waiting for new images to come in")
             self.buffer_condition.wait()
 
