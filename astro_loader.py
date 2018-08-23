@@ -7,7 +7,7 @@ import threading
 import random
 
 from astropy.io import fits
-from astropy.visualization import ZScaleInterval
+from astropy.visualization import ZScaleInterval, LogStretch
 
 
 class ZMaxInterval(ZScaleInterval):
@@ -25,6 +25,7 @@ class AstroLoader:
         self.preload = 4
         self.s3 = boto3.client('s3')
         self.zmax = ZMaxInterval()
+        self.logstretch = LogStretch()
 
         filenames = []
         with open(os.path.join(os.path.dirname(__file__), 'astroquery-index.csv'), 'r') as index:
@@ -109,7 +110,7 @@ class AstroLoader:
         return tiles
 
     def stretch(self, image):
-        return self.zmax(image)
+        return self.logstretch(self.zmax(image))
 
     def get_tiles(self, batch_size=32):
         if batch_size % self.tiles_per_raw_image != 0:
