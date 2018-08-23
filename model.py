@@ -165,6 +165,7 @@ class DCGAN(object):
 
         sample_z = np.random.uniform(-1, 1, size=(self.sample_num, self.z_dim))
         sample_inputs = self.astro_loader.get_tiles(self.sample_num)
+        sample_inputs = np.expand_dims(sample_inputs, 3)
 
         counter = 1
         start_time = time.time()
@@ -183,6 +184,7 @@ class DCGAN(object):
 
             for idx in xrange(0, int(batch_idxs)):
                 batch_images = self.astro_loader.get_tiles(config.batch_size)
+                batch_images = np.expand_dims(batch_images, 3)
                 batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]) \
                     .astype(np.float32)
 
