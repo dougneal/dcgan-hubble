@@ -10,7 +10,7 @@ from six.moves import xrange
 from ops import *
 from ops import BatchNorm
 from utils import *
-from astro_utils import get_scaled_fits_image
+from astro_loader import AstroLoader
 
 def conv_out_size_same(size, stride):
     return int(math.ceil(float(size) / float(stride)))
@@ -28,10 +28,10 @@ def conv_out_size_same(size, stride):
 
 class DCGAN(object):
     def __init__(self, sess, height, width, crop=False,
-                 batch_size=64, sample_num=64,
+                 batch_size=32, sample_num=32,
                  y_dim=None, z_dim=100, gf_dim=64, df_dim=64,
-                 gfc_dim=1024, dfc_dim=1024, dataset_name='default',
-                 input_fname_pattern='*.fits', checkpoint_dir=None, sample_dir=None, data_dir='./data', logs_dir='./logs'):
+                 gfc_dim=1024, dfc_dim=1024,
+                 checkpoint_dir=None, sample_dir=None, data_dir='./data', logs_dir='./logs'):
         """
 
         Args:
@@ -79,37 +79,13 @@ class DCGAN(object):
         if not self.y_dim:
             self.g_bn3 = BatchNorm(name='g_bn3')
 
-        self.dataset_name = dataset_name
-        self.input_fname_pattern = input_fname_pattern
         self.checkpoint_dir = checkpoint_dir
         self.data_dir = data_dir
         self.logs_dir = logs_dir
 
-        data_path = os.path.join(
-            self.data_dir,
-            self.dataset_name,
-            self.input_fname_pattern
-        )
-
-        self.data_filenames = glob(data_path)
-        if len(self.data_filenames) == 0:
-            raise Exception("[!] No data found in '" + data_path + "'")
-
-        np.random.shuffle(self.data_filenames)
-
-        #  imreadImg = imread(self.data_filenames[0])
-        #  # check if image is a non-grayscale image by checking channel number
-        #  if len(imreadImg.shape) >= 3:
-        #      self.colors = imread(self.data[0]).shape[-1]
-        #  else:
-        #      self.colors = 1
-
-        #  self.grayscale = (self.c_dim == 1)
+        self.astro_loader = AstroLoader()
         self.grayscale = True
         self.c_dim = 1
-
-        if len(self.data_filenames) < self.batch_size:
-            raise Exception("[!] Entire dataset size is less than the configured batch_size")
 
         self.build_model()
 
@@ -189,15 +165,7 @@ class DCGAN(object):
         self.writer = SummaryWriter(self.logs_dir, self.sess.graph)
 
         sample_z = np.random.uniform(-1, 1, size=(self.sample_num, self.z_dim))
-
-        sample_files = self.data_filenames[0:self.sample_num]
-        # This is where we specify resize parameters - removed for now
-        sample = [get_scaled_fits_image(sample_file) for sample_file in sample_files]
-
-        if (self.grayscale):
-            sample_inputs = np.array(sample).astype(np.float32)[:, :, :, None]
-        else:
-            sample_inputs = np.array(sample).astype(np.float32)
+        sample_inputs = self.astro_loader.get_tiles(self.sample_num)
 
         counter = 1
         start_time = time.time()
@@ -214,17 +182,7 @@ class DCGAN(object):
                 len(self.data_filenames), config.train_size) // config.batch_size
 
             for idx in xrange(0, int(batch_idxs)):
-                batch_files = self.data_filenames[idx *
-                                        config.batch_size:(idx+1)*config.batch_size]
-                # This is where we specify resize parameters - removed for now
-                batch = [get_scaled_fits_image(batch_file) for batch_file in batch_files]
-
-                if self.grayscale:
-                    batch_images = np.array(batch).astype(
-                        np.float32)[:, :, :, None]
-                else:
-                    batch_images = np.array(batch).astype(np.float32)
-
+                batch_images = self.astro_loader.get_tiles(config.batch_size)
                 batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]) \
                     .astype(np.float32)
 
@@ -436,9 +394,9 @@ class DCGAN(object):
 
     @property
     def model_dir(self):
-        return "{}_{}_{}_{}".format(
-            self.dataset_name, self.batch_size,
-            self.output_height, self.output_width)
+        return "{}_{}_{}".format(
+            self.batch_size, self.output_height, self.output_width
+        )
 
     def save(self, checkpoint_dir, step):
         model_name = "DCGAN.model"
