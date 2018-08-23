@@ -19,8 +19,10 @@ class ZMaxInterval(ZScaleInterval):
 
 
 class AstroLoader:
-    def __init__(self, preload=8):
+    def __init__(self, preload=8, limit=65536):
+        self.limit = limit
         self.tiles_per_raw_image = 256
+        self.nfiles_considered = self.limit // self.tiles_per_raw_image
         self.preload = preload
         self.s3 = boto3.client('s3')
         self.zmax = ZMaxInterval()
@@ -40,6 +42,10 @@ class AstroLoader:
                 filenames.append(s3key)
 
         print("{0} file URLs loaded".format(len(filenames)))
+        print("Randomising and keeping {0} of them".format(self.nfiles_considered))
+        random.shuffle(filenames)
+        filenames = filenames[0:self.nfiles_considered]
+
         self.files = numpy.array(filenames)
 
         self.tile_buffer = []

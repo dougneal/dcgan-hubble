@@ -20,7 +20,6 @@ def conv_out_size_same(size, stride):
 #  - Chop out the data loading parts and replace them with a FITS loader
 #  - Rename some of these arguments to be a bit less cryptic
 #
-#  - self.data_filenames is a list of image filenames
 #  - sample_num is the number of images to take from the data set
 #    - it's randomised so should be a different set each time
 #    - it could be the full set?
@@ -177,9 +176,10 @@ class DCGAN(object):
             print(" [!] Load failed...")
 
         for epoch in xrange(config.epoch):
-            np.random.shuffle(self.data_filenames)
             batch_idxs = min(
-                len(self.data_filenames), config.train_size) // config.batch_size
+                self.astro_loader.limit,
+                config.train_size
+            ) // config.batch_size
 
             for idx in xrange(0, int(batch_idxs)):
                 batch_images = self.astro_loader.get_tiles(config.batch_size)
