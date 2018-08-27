@@ -5,7 +5,6 @@ import math
 from glob import glob
 import tensorflow as tf
 import numpy as np
-from six.moves import xrange
 
 from ops import *
 from ops import BatchNorm
@@ -176,13 +175,13 @@ class DCGAN(object):
         else:
             print(" [!] Load failed...")
 
-        for epoch in xrange(config.epoch):
+        for epoch in range(config.epoch):
             batch_idxs = min(
                 self.astro_loader.limit,
                 config.train_size
             ) // config.batch_size
 
-            for idx in xrange(0, int(batch_idxs)):
+            for idx in range(0, int(batch_idxs)):
                 batch_images = self.astro_loader.get_tiles(config.batch_size)
                 batch_images = np.expand_dims(batch_images, 3)
                 batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]) \
