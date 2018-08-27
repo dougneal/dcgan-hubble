@@ -10,6 +10,8 @@ from ops import *
 from ops import BatchNorm
 from utils import *
 from astro_loader import AstroLoader
+from s3_export import export_images_to_s3
+
 
 def conv_out_size_same(size, stride):
     return int(math.ceil(float(size) / float(stride)))
@@ -43,6 +45,7 @@ class DCGAN(object):
           dfc_dim: (optional) Dimension of discrim units for fully connected layer. [1024]
           colors: (optional) Dimension of image color. For grayscale input, set to 1. [3]
         """
+        self.session_timestamp = time.strftime("%Y%m%d_%H%M", time.localtime())
         self.sess = sess
         self.crop = crop
 
@@ -220,8 +223,6 @@ class DCGAN(object):
                                 self.inputs: sample_inputs,
                             },
                         )
-                        save_images(samples, image_manifold_size(samples.shape[0]),
-                                    './{}/train_{:02d}_{:04d}.png'.format(config.sample_dir, epoch, idx))
                         print("[Sample] d_loss: %.8f, g_loss: %.8f" %
                               (d_loss, g_loss))
                     except:
@@ -229,6 +230,25 @@ class DCGAN(object):
 
                 if np.mod(counter, 500) == 2:
                     self.save(config.checkpoint_dir, counter)
+
+            # Generate images at the end of each epoch
+            try:
+                samples, d_loss, g_loss = self.sess.run(
+                    [self.sampler, self.d_loss, self.g_loss],
+                    feed_dict={
+                        self.z: sample_z,
+                        self.inputs: sample_inputs,
+                    },
+                )
+                export_images_to_s3(
+                    samples,
+                    timestamp=self.session_timestamp,
+                    training=True,
+                    epoch=epoch,
+                )
+            except Exception as e:
+                print("Caught exception during end-of-epoch generation: {0}".format(e))
+
 
     def discriminator(self, image, y=None, reuse=False):
         with tf.variable_scope("discriminator") as scope:
