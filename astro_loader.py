@@ -83,7 +83,7 @@ class AstroLoader:
             )
 
             for t in range(len(new_tiles)):
-                new_tiles[t] = self.stretch(new_tiles[t])
+                new_tiles[t] = self.transform(self.stretch(new_tiles[t]))
 
             print("Feeder: here's {0} new tiles".format(len(new_tiles)))
             self.tile_buffer.extend(new_tiles)
@@ -137,6 +137,10 @@ class AstroLoader:
 
     def stretch(self, image):
         return self.logstretch(self.zmax(image))
+
+    # Re-scale the pixel values to the -1.0 to 1.0 range required by the DCGAN.
+    def transform(self, image):
+        return (image / 127.5) - 1
 
     def get_tiles(self, batch_size=32):
         batch = []
