@@ -8,6 +8,9 @@ bucket = s3.Bucket('jh-dn-dcgan-hubble')
 
 
 def export_images_to_s3(images, timestamp, training=False, epoch=None, setnum=None):
+    # Remove extra dimensions: (height, width, 1) -> (height, width)
+    images = numpy.squeeze(images)
+
     # Map the -1.0 to 1.0 range back up to the 0-255 range
     images = (images + 1.0) * 127.5
     images = images.astype(numpy.uint8)
