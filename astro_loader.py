@@ -6,7 +6,7 @@ import threading
 import random
 
 from astropy.io import fits
-from astropy.visualization import ZScaleInterval, LogStretch
+from astropy.visualization import ZScaleInterval, LogStretch, AsinhStretch
 
 
 class ZMaxInterval(ZScaleInterval):
@@ -26,7 +26,9 @@ class AstroLoader:
         self.preload = preload
         self.s3 = boto3.client('s3')
         self.zmax = ZMaxInterval()
+        self.zscale = ZScaleInterval()
         self.logstretch = LogStretch()
+        self.asinhstretch = AsinhStretch()
 
         filenames = []
         with open(os.path.join(os.path.dirname(__file__), 'astroquery-index.csv'), 'r') as index:
@@ -136,7 +138,8 @@ class AstroLoader:
         return tiles
 
     def stretch(self, image):
-        return self.logstretch(self.zmax(image))
+        return self.asinhstretch(self.zscale(image))
+        #return self.logstretch(self.zmax(image))
 
     # Re-scale the pixel values to the -1.0 to 1.0 range required by the DCGAN.
     def transform(self, image):
