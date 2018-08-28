@@ -7,7 +7,7 @@ import tensorflow as tf
 import numpy as np
 
 from ops import *
-from ops import BatchNorm
+from ops import BatchNorm, lrelu, conv2d, linear
 from utils import *
 from astro_loader import AstroLoader
 from s3_export import export_images_to_s3
@@ -249,22 +249,35 @@ class DCGAN(object):
             except Exception as e:
                 print("Caught exception during end-of-epoch generation: {0}".format(e))
 
-
     def discriminator(self, image, y=None, reuse=False):
         with tf.variable_scope("discriminator") as scope:
             if reuse:
                 scope.reuse_variables()
 
             if not self.y_dim:
-                h0 = lrelu(conv2d(image, self.df_dim, name='d_h0_conv'))
-                h1 = lrelu(self.d_bn1(
-                    conv2d(h0, self.df_dim*2, name='d_h1_conv')))
-                h2 = lrelu(self.d_bn2(
-                    conv2d(h1, self.df_dim*4, name='d_h2_conv')))
-                h3 = lrelu(self.d_bn3(
-                    conv2d(h2, self.df_dim*8, name='d_h3_conv')))
-                h4 = linear(tf.reshape(
-                    h3, [self.batch_size, -1]), 1, 'd_h4_lin')
+                h0 = lrelu(
+                    conv2d(image, self.df_dim, name='d_h0_conv')
+                )
+                h1 = lrelu(
+                    self.d_bn1(
+                        conv2d(h0, self.df_dim * 2, name='d_h1_conv')
+                    )
+                )
+                h2 = lrelu(
+                    self.d_bn2(
+                        conv2d(h1, self.df_dim * 4, name='d_h2_conv')
+                    )
+                )
+                h3 = lrelu(
+                    self.d_bn3(
+                        conv2d(h2, self.df_dim * 8, name='d_h3_conv')
+                    )
+                )
+                h4 = linear(
+                    tf.reshape(h3, [self.batch_size, -1]),
+                    1,
+                    'd_h4_lin'
+                )
 
                 return tf.nn.sigmoid(h4), h4
             else:
