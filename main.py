@@ -6,8 +6,6 @@ import numpy
 import pprint
 
 from model import DCGAN
-#from utils import visualize
-import IPython
 
 import tensorflow as tf
 
@@ -24,7 +22,7 @@ flags.DEFINE_integer("batch_size", 64, "The size of batch images [64]")
 
 # The original images are 4096x2048.
 # For speed during development we're resizing down to 512x256.
-# There will be a way to make this adjustable at some point.
+# There will be a way to make this adjustable at some point.
 flags.DEFINE_integer("height", 256, "Image height")
 flags.DEFINE_integer("width", 512, "Image width")
 
@@ -93,14 +91,15 @@ def tf_main(_):
             if not dcgan.load(FLAGS.checkpoint_dir)[0]:
                 raise Exception("Model needs training first")
 
-        ## I think this is where the magic happens?
-        #visualize(sess, dcgan, FLAGS, 0)
-
+        # This is where we could generate new images
+        # visualize(sess, dcgan, FLAGS, 0)
+        #
         # This is copied from various places in utils.py. Still need to fully understand what's going on.
-        z_sample = numpy.random.uniform(-0.5, 0.5, size=(FLAGS.batch_size, dcgan.z_dim))
-        samples = sess.run(dcgan.sampler, feed_dict={dcgan.z: z_sample})
-        images = (samples + 1.0)/2.0
-        IPython.embed()
+        # z_sample = numpy.random.uniform(-0.5, 0.5, size=(FLAGS.batch_size, dcgan.z_dim))
+        # samples = sess.run(dcgan.sampler, feed_dict={dcgan.z: z_sample})
+        # images = (samples + 1.0)/2.0
+        # IPython.embed()
+
 
 if __name__ == '__main__':
     if not tf.test.is_built_with_cuda():
