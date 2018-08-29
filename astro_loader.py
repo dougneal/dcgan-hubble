@@ -142,8 +142,10 @@ class AstroLoader:
         #return self.logstretch(self.zmax(image))
 
     # Re-scale the pixel values to the -1.0 to 1.0 range required by the DCGAN.
+    # At this point it's already sitting between 0.0 and 1.0 as this is what the astropy
+    # stretch and scale functions give back.
     def transform(self, image):
-        return (image / 127.5) - 1
+        return (image * 2) - 1
 
     def get_tiles(self, batch_size=32):
         batch = []
