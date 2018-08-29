@@ -138,8 +138,8 @@ class AstroLoader:
         return tiles
 
     def stretch(self, image):
-        return self.asinhstretch(self.zscale(image))
-        #return self.logstretch(self.zmax(image))
+        return self.logstretch(self.zmax(image))
+        #return self.asinhstretch(self.zscale(image))
 
     # Re-scale the pixel values to the -1.0 to 1.0 range required by the DCGAN.
     # At this point it's already sitting between 0.0 and 1.0 as this is what the astropy
