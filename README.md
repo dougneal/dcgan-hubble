@@ -12,7 +12,11 @@ Adversarial Network.
 
 ## Usage
 
-Coming soon
+### Training
+
+```
+$ python main.py --width 517 --height 257 --epochs 250 --train
+```
 
 ## Authors and copyright
 
