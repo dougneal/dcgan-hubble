@@ -25,11 +25,11 @@ def export_images_to_s3(images, timestamp, training=False, epoch=None, setnum=No
         bytesio.seek(0)
 
         if training:
-            s3key = "{0}/training/epoch_{1}/{2}.png".format(
+            s3key = "{0}/training/epoch_{1:04d}/{2:04d}.png".format(
                 timestamp, epoch, i
             )
         else:
-            s3key = "{0}/set_{1}/{2}.png".format(
+            s3key = "{0}/set_{1:04d}/{2:04d}.png".format(
                 timestamp, setnum, i
             )
 
