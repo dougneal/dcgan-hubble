@@ -161,7 +161,7 @@ resource "aws_key_pair" "shared" {
 }
 
 resource "aws_spot_instance_request" "production" {
-  spot_price                      = "0.920"
+  spot_price                      = "1.000"
   instance_type                   = "p3.2xlarge"
   ami                             = "ami-09994a343440ce0cd"
   instance_interruption_behaviour = "stop"
