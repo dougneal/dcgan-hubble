@@ -209,17 +209,47 @@ output "integration_ipv6" {
   value = "${aws_instance.integration.ipv6_addresses}"
 }
 
-# data "aws_instance" "production" {
-#   instance_tags {
-#     Name = "production"
-#   }
-# }
-# 
-# output "production_ipv4" {
-#   value = "${data.aws_instance.production.public_ip}"
-# }
-# 
-# output "production_ipv6" {
-#   value = "${data.aws_instance.production.ipv6_addresses}"
-# }
+resource "aws_efs_file_system" "workspace" {
+  creation_token   = "dcgan-hubble-workspace"
+  performance_mode = "generalPurpose"
+  throughput_mode  = "bursting"
+}
 
+resource "aws_security_group" "nfs" {
+  name   = "nfs"
+  vpc_id = "${aws_vpc.main.id}"
+
+  ingress {
+    from_port        = 2049
+    to_port          = 2049
+    protocol         = "tcp"
+    ipv6_cidr_blocks = ["${aws_vpc.main.ipv6_cidr_block}"]
+    cidr_blocks      = ["${aws_vpc.main.cidr_block}"]
+  }
+}
+
+resource "aws_efs_mount_target" "workspace_us-east-1a" {
+  file_system_id  = "${aws_efs_file_system.workspace.id}"
+  subnet_id       = "${aws_subnet.public_us-east-1a.id}"
+  security_groups = ["${aws_security_group.nfs.id}"]
+}
+
+resource "aws_efs_mount_target" "workspace_us-east-1b" {
+  file_system_id  = "${aws_efs_file_system.workspace.id}"
+  subnet_id       = "${aws_subnet.public_us-east-1b.id}"
+  security_groups = ["${aws_security_group.nfs.id}"]
+}
+
+resource "aws_efs_mount_target" "workspace_us-east-1e" {
+  file_system_id  = "${aws_efs_file_system.workspace.id}"
+  subnet_id       = "${aws_subnet.public_us-east-1e.id}"
+  security_groups = ["${aws_security_group.nfs.id}"]
+}
+
+output "efs_endpoints" {
+  value = [
+    "${aws_efs_mount_target.workspace_us-east-1a.dns_name}",
+    "${aws_efs_mount_target.workspace_us-east-1b.dns_name}",
+    "${aws_efs_mount_target.workspace_us-east-1e.dns_name}",
+  ]
+}
