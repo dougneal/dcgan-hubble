@@ -6,6 +6,7 @@ import numpy
 import pprint
 
 from model import DCGAN
+from s3_export import export_images_to_s3
 
 import tensorflow as tf
 
@@ -91,14 +92,16 @@ def tf_main(_):
             if not dcgan.load(FLAGS.checkpoint_dir)[0]:
                 raise Exception("Model needs training first")
 
-        # This is where we could generate new images
-        # visualize(sess, dcgan, FLAGS, 0)
-        #
-        # This is copied from various places in utils.py. Still need to fully understand what's going on.
-        # z_sample = numpy.random.uniform(-0.5, 0.5, size=(FLAGS.batch_size, dcgan.z_dim))
-        # samples = sess.run(dcgan.sampler, feed_dict={dcgan.z: z_sample})
-        # images = (samples + 1.0)/2.0
-        # IPython.embed()
+        z_sample = numpy.random.uniform(-0.5, 0.5, size=(FLAGS.batch_size, dcgan.z_dim))
+        samples = sess.run(
+            dcgan.sampler,
+            feed_dict={dcgan.z: z_sample}
+        )
+        export_images_to_s3(
+            samples,
+            label=dcgan.session_timestamp,
+            setnum=0,
+        )
 
 
 if __name__ == '__main__':
