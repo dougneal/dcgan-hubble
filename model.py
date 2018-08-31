@@ -84,7 +84,6 @@ class DCGAN(object):
         self.data_dir = data_dir
         self.logs_dir = logs_dir
 
-        self.astro_loader = AstroLoader()
         self.grayscale = True
         self.c_dim = 1
 
@@ -150,6 +149,8 @@ class DCGAN(object):
         self.saver = tf.train.Saver()
 
     def train(self, config):
+        astro_loader = AstroLoader()
+
         d_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
             .minimize(self.d_loss, var_list=self.d_vars)
         g_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
@@ -166,7 +167,7 @@ class DCGAN(object):
         self.writer = SummaryWriter(self.logs_dir, self.sess.graph)
 
         sample_z = np.random.uniform(-1, 1, size=(self.sample_num, self.z_dim))
-        sample_inputs = self.astro_loader.get_tiles(self.sample_num)
+        sample_inputs = astro_loader.get_tiles(self.sample_num)
         sample_inputs = np.expand_dims(sample_inputs, 3)
 
         counter = 1
@@ -180,12 +181,12 @@ class DCGAN(object):
 
         for epoch in range(config.epoch):
             batch_idxs = min(
-                self.astro_loader.limit,
+                astro_loader.limit,
                 config.train_size
             ) // config.batch_size
 
             for idx in range(0, int(batch_idxs)):
-                batch_images = self.astro_loader.get_tiles(config.batch_size)
+                batch_images = astro_loader.get_tiles(config.batch_size)
                 batch_images = np.expand_dims(batch_images, 3)
                 batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]) \
                     .astype(np.float32)
