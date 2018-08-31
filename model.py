@@ -242,7 +242,7 @@ class DCGAN(object):
                 )
                 export_images_to_s3(
                     samples,
-                    timestamp=self.session_timestamp,
+                    label=self.session_timestamp,
                     training=True,
                     epoch=epoch,
                 )

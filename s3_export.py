@@ -7,7 +7,7 @@ s3 = boto3.resource('s3')
 bucket = s3.Bucket('jh-dn-dcgan-hubble')
 
 
-def export_images_to_s3(images, timestamp, training=False, epoch=None, setnum=None):
+def export_images_to_s3(images, label, training=False, epoch=None, setnum=None):
     # Remove extra dimensions: (height, width, 1) -> (height, width)
     images = numpy.squeeze(images)
 
@@ -25,12 +25,12 @@ def export_images_to_s3(images, timestamp, training=False, epoch=None, setnum=No
         bytesio.seek(0)
 
         if training:
-            s3key = "{0}/training/epoch_{1:04d}/{2:04d}.png".format(
-                timestamp, epoch, i
+            s3key = "training/{0}/epoch_{1:04d}/{2:04d}.png".format(
+                label, epoch, i
             )
         else:
-            s3key = "{0}/set_{1:04d}/{2:04d}.png".format(
-                timestamp, setnum, i
+            s3key = "samples/{0}/set_{1:04d}/{2:04d}.png".format(
+                label, setnum, i
             )
 
         s3obj = bucket.Object(s3key)
