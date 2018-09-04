@@ -173,7 +173,7 @@ class DCGAN(object):
         else:
             print(" [!] Load failed...")
 
-        for epoch in range(config.epoch):
+        for epoch in range(config.epochs):
             batch_idxs = min(
                 astro_loader.limit,
                 config.train_size
@@ -206,7 +206,7 @@ class DCGAN(object):
 
                 counter += 1
                 print("Epoch: [%2d/%2d] [%4d/%4d] time: %4.4f, d_loss: %.8f, g_loss: %.8f"
-                      % (epoch, config.epoch, idx, batch_idxs,
+                      % (epoch, config.epochs, idx, batch_idxs,
                          time.time() - start_time, errD_fake + errD_real, errG))
 
                 if np.mod(counter, 100) == 1:
