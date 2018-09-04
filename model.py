@@ -2,7 +2,6 @@ from __future__ import division
 import os
 import time
 import math
-from glob import glob
 import tensorflow as tf
 import numpy as np
 
@@ -18,12 +17,8 @@ def conv_out_size_same(size, stride):
 
 # Thoughts:  (DN)
 #  - Remove the cropping, make the output width/height always be the input w/h.
-#  - Chop out the data loading parts and replace them with a FITS loader
-#  - Rename some of these arguments to be a bit less cryptic
-#
+#  - Rename some of these arguments to be a bit less cryptic
 #  - sample_num is the number of images to take from the data set
-#    - it's randomised so should be a different set each time
-#    - it could be the full set?
 
 
 class DCGAN(object):
@@ -31,7 +26,7 @@ class DCGAN(object):
                  batch_size=32, sample_num=32,
                  y_dim=None, z_dim=100, gf_dim=64, df_dim=64,
                  gfc_dim=1024, dfc_dim=1024,
-                 checkpoint_dir=None, sample_dir=None, data_dir='./data', logs_dir='./logs'):
+                 checkpoint_dir=None, logs_dir='./logs'):
         """
 
         Args:
@@ -81,7 +76,6 @@ class DCGAN(object):
             self.g_bn3 = BatchNorm(name='g_bn3')
 
         self.checkpoint_dir = checkpoint_dir
-        self.data_dir = data_dir
         self.logs_dir = logs_dir
 
         self.grayscale = True
@@ -179,7 +173,7 @@ class DCGAN(object):
         else:
             print(" [!] Load failed...")
 
-        for epoch in range(config.epoch):
+        for epoch in range(config.epochs):
             batch_idxs = min(
                 astro_loader.limit,
                 config.train_size
@@ -212,8 +206,8 @@ class DCGAN(object):
 
                 counter += 1
                 print("Epoch: [%2d/%2d] [%4d/%4d] time: %4.4f, d_loss: %.8f, g_loss: %.8f"
-                      % (epoch, config.epoch, idx, batch_idxs,
-                         time.time() - start_time, errD_fake+errD_real, errG))
+                      % (epoch, config.epochs, idx, batch_idxs,
+                         time.time() - start_time, errD_fake + errD_real, errG))
 
                 if np.mod(counter, 100) == 1:
                     try:
@@ -226,8 +220,9 @@ class DCGAN(object):
                         )
                         print("[Sample] d_loss: %.8f, g_loss: %.8f" %
                               (d_loss, g_loss))
-                    except:
-                        print("one pic error!...")
+
+                    except Exception as e:
+                        print(e)
 
                 if np.mod(counter, 500) == 2:
                     self.save(config.checkpoint_dir, counter)

@@ -13,7 +13,7 @@ import tensorflow as tf
 flags = tf.app.flags
 
 # Leaving these as-is as I don't yet fully understand what they do
-flags.DEFINE_integer("epoch", 25, "Epoch to train [25]")
+flags.DEFINE_integer("epochs", 25, "Number of epochs to train [25]")
 flags.DEFINE_float("learning_rate", 0.0002,
                    "Learning rate of for adam [0.0002]")
 flags.DEFINE_float("beta1", 0.5, "Momentum term of adam [0.5]")
@@ -27,22 +27,14 @@ flags.DEFINE_integer("batch_size", 64, "The size of batch images [64]")
 flags.DEFINE_integer("height", 256, "Image height")
 flags.DEFINE_integer("width", 512, "Image width")
 
-# This can probably be tidied up a bit.
-flags.DEFINE_string("input_fname_pattern", "*.fits",
-                    "Glob pattern of filename of input images [*]")
 flags.DEFINE_string("checkpoint_dir", "checkpoint",
                     "Directory name to save the checkpoints [checkpoint]")
-flags.DEFINE_string("data_dir", "./data", "Root directory of dataset [data]")
-flags.DEFINE_string("sample_dir", "samples",
-                    "Directory name to save the image samples [samples]")
 flags.DEFINE_string("logs_dir", "logs",
                     "Directory name to save the logs [logs]")
 
 # These look fine
 flags.DEFINE_boolean(
     "train", False, "True for training, False for testing [False]")
-flags.DEFINE_boolean(
-    "crop", False, "True for training, False for testing [False]")
 flags.DEFINE_boolean("visualize", False,
                      "True for visualizing, False for nothing [False]")
 flags.DEFINE_integer("generate_test_images", 100,
@@ -60,9 +52,6 @@ def tf_main(_):
     if not os.path.exists(FLAGS.checkpoint_dir):
         os.makedirs(FLAGS.checkpoint_dir)
 
-    if not os.path.exists(FLAGS.sample_dir):
-        os.makedirs(FLAGS.sample_dir)
-
     if not os.path.exists(FLAGS.logs_dir):
         os.makedirs(FLAGS.logs_dir)
 
@@ -75,7 +64,6 @@ def tf_main(_):
             width=FLAGS.width,
             height=FLAGS.height,
             checkpoint_dir=FLAGS.checkpoint_dir,
-            sample_dir=FLAGS.sample_dir,
             logs_dir=FLAGS.logs_dir,
             batch_size=FLAGS.batch_size,
             sample_num=FLAGS.batch_size,
