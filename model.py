@@ -209,85 +209,28 @@ class DCGAN(object):
                       % (epoch, config.epochs, idx, batch_idxs,
                          time.time() - start_time, errD_fake + errD_real, errG))
 
-                if np.mod(counter, 100) == 1:
-                    try:
-                        samples, d_loss, g_loss = self.sess.run(
-                            [self.sampler, self.d_loss, self.g_loss],
-                            feed_dict={
-                                self.z: sample_z,
-                                self.inputs: sample_inputs,
-                            },
-                        )
-                        print("[Sample] d_loss: %.8f, g_loss: %.8f" %
-                              (d_loss, g_loss))
+                try:
+                    samples = self.sess.run(
+                        self.sampler,
+                        feed_dict={
+                            self.z: np.random.uniform(-1, 1, size=(self.sample_num, self.z_dim))
+                        }
+                    )
 
-                    except Exception as e:
-                        print(e)
+                    export_images_to_s3(
+                        samples[0:7],
+                        key_prefix="{0}/training/epoch_{1:04d}/iteration_{2:04d}_".format(
+                            self.session_timestamp,
+                            epoch,
+                            idx,
+                        ),
+                    )
+                except Exception as e:
+                    print(e)
 
                 if np.mod(counter, 500) == 2:
                     self.save(config.checkpoint_dir, counter)
 
-            # Generate images at the end of each epoch
-            try:
-                # This is an experiment
-                # A1 and A2 are identical
-                samples, d_loss, g_loss = self.sess.run(
-                    [self.sampler, self.d_loss, self.g_loss],
-                    feed_dict={
-                        self.z: sample_z,
-                        self.inputs: sample_inputs,
-                    },
-                )
-                export_images_to_s3(
-                    samples,
-                    label="{0}_A1".format(self.session_timestamp),
-                    training=True,
-                    epoch=epoch,
-                )
-
-                samples, d_loss, g_loss = self.sess.run(
-                    [self.sampler, self.d_loss, self.g_loss],
-                    feed_dict={
-                        self.z: sample_z,
-                        self.inputs: sample_inputs,
-                    },
-                )
-                export_images_to_s3(
-                    samples,
-                    label="{0}_A2".format(self.session_timestamp),
-                    training=True,
-                    epoch=epoch,
-                )
-
-                # and with fresh random numbers
-                samples = self.sess.run(
-                    self.sampler,
-                    feed_dict={
-                        self.z: np.random.uniform(-1, 1, size=(self.sample_num, self.z_dim))
-                    }
-                )
-                export_images_to_s3(
-                    samples,
-                    label="{0}_B1".format(self.session_timestamp),
-                    training=True,
-                    epoch=epoch,
-                )
-
-                samples = self.sess.run(
-                    self.sampler,
-                    feed_dict={
-                        self.z: np.random.uniform(-1, 1, size=(self.sample_num, self.z_dim))
-                    }
-                )
-                export_images_to_s3(
-                    samples,
-                    label="{0}_B2".format(self.session_timestamp),
-                    training=True,
-                    epoch=epoch,
-                )
-
-            except Exception as e:
-                print("Caught exception during end-of-epoch generation: {0}".format(e))
 
     def discriminator(self, image, y=None, reuse=False):
         with tf.variable_scope("discriminator") as scope:
