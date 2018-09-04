@@ -238,10 +238,25 @@ class DCGAN(object):
                 )
                 export_images_to_s3(
                     samples,
-                    label=self.session_timestamp,
+                    label="{0}_A".format(self.session_timestamp),
                     training=True,
                     epoch=epoch,
                 )
+
+                # This is an experiment
+                samples, self.sess.run(
+                    self.sampler,
+                    feed_dict={
+                        self.z: np.random.uniform(-1, 1, size=(self.sample_num, self.z_dim))
+                    }
+                )
+                export_images_to_s3(
+                    samples,
+                    label="{0}_B".format(self.session_timestamp),
+                    training=True,
+                    epoch=epoch,
+                )
+
             except Exception as e:
                 print("Caught exception during end-of-epoch generation: {0}".format(e))
 
