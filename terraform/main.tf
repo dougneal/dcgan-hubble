@@ -206,32 +206,6 @@ resource "aws_spot_instance_request" "production" {
 #   }
 # }
 
-resource "aws_instance" "integration" {
-  instance_type               = "t3.medium"
-  ami                         = "ami-09994a343440ce0cd"
-  associate_public_ip_address = true
-  subnet_id                   = "${aws_subnet.public_us-east-1a.id}"
-  iam_instance_profile        = "dcgan-hubble"
-  vpc_security_group_ids      = ["${aws_security_group.main.id}"]
-  key_name                    = "${aws_key_pair.shared.key_name}"
-
-  credit_specification {
-    cpu_credits = "unlimited"
-  }
-
-  tags = {
-    Name = "integration"
-  }
-}
-
-output "integration_ipv4" {
-  value = "${aws_instance.integration.public_ip}"
-}
-
-output "integration_ipv6" {
-  value = "${aws_instance.integration.ipv6_addresses}"
-}
-
 resource "aws_efs_file_system" "workspace" {
   creation_token   = "dcgan-hubble-workspace"
   performance_mode = "generalPurpose"
