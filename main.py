@@ -87,8 +87,9 @@ def tf_main(_):
         )
         export_images_to_s3(
             samples,
-            label=dcgan.session_timestamp,
-            setnum=0,
+            key_prefix="{0}/samples/".format(
+                dcgan.session_timestamp
+            )
         )
 
 
