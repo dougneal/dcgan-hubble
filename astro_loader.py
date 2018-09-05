@@ -21,7 +21,7 @@ class ZMaxInterval(ZScaleInterval):
 class AstroLoader:
     def __init__(self, preload=8, limit=65536):
         self.limit = limit
-        self.tiles_per_raw_image = 256
+        self.tiles_per_raw_image = 64
         self.nfiles_considered = self.limit // self.tiles_per_raw_image
         self.preload = preload
         self.s3 = boto3.client('s3')
@@ -117,7 +117,7 @@ class AstroLoader:
                 return plane.data
 
     def cut_into_tiles(self, image):
-        divisions = numpy.log2(self.tiles_per_raw_image).astype(numpy.int)
+        divisions = numpy.sqrt(self.tiles_per_raw_image).astype(numpy.int)
         # Round down
         tile_height, tile_width = numpy.floor(image.shape / divisions).astype(numpy.int)
         crop_height = tile_height * divisions
