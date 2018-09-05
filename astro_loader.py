@@ -96,9 +96,7 @@ class AstroLoader:
 
     def select_random(self):
         file_num = numpy.random.randint(0, len(self.files))
-        file_name = self.files[file_num]
-        numpy.delete(self.files, file_num)
-        return file_name
+        return self.files[file_num]
 
     def load_from_s3(self, key):
         print("Downloading {0}".format(key))
