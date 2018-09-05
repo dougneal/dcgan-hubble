@@ -160,28 +160,28 @@ resource "aws_key_pair" "shared" {
   public_key = "${file("shared_ssh.key.pub")}"
 }
 
-# resource "aws_spot_instance_request" "production" {
-#   spot_price                      = "1.000"
-#   instance_type                   = "p3.2xlarge"
-#   ami                             = "ami-09994a343440ce0cd"
-#   instance_interruption_behaviour = "stop"
-#   valid_until                     = "2018-09-16T00:00:00Z"
-#   spot_type                       = "persistent"
-#   associate_public_ip_address     = true
-#   subnet_id                       = "${aws_subnet.public_us-east-1a.id}"
-#   iam_instance_profile            = "dcgan-hubble"
-#   vpc_security_group_ids          = ["${aws_security_group.main.id}"]
-#   key_name                        = "${aws_key_pair.shared.key_name}"
-#   wait_for_fulfillment            = false
-# 
-#   tags = {
-#     Name = "production"
-#   }
-# 
-#   lifecycle {
-#     ignore_changes = ["ipv6_address_count", "ipv6_addresses", "root_block_device"]
-#   }
-# }
+resource "aws_spot_instance_request" "production" {
+  spot_price                      = "1.000"
+  instance_type                   = "p3.2xlarge"
+  ami                             = "ami-09994a343440ce0cd"
+  instance_interruption_behaviour = "stop"
+  valid_until                     = "2018-09-16T00:00:00Z"
+  spot_type                       = "persistent"
+  associate_public_ip_address     = true
+  subnet_id                       = "${aws_subnet.public_us-east-1a.id}"
+  iam_instance_profile            = "dcgan-hubble"
+  vpc_security_group_ids          = ["${aws_security_group.main.id}"]
+  key_name                        = "${aws_key_pair.shared.key_name}"
+  wait_for_fulfillment            = false
+
+  tags = {
+    Name = "production"
+  }
+
+  lifecycle {
+    ignore_changes = ["ipv6_address_count", "ipv6_addresses", "root_block_device"]
+  }
+}
 
 # resource "aws_spot_instance_request" "production_2" {
 #   spot_price                      = "1.000"
