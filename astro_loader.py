@@ -19,9 +19,9 @@ class ZMaxInterval(ZScaleInterval):
 
 
 class AstroLoader:
-    def __init__(self, preload=16, limit=65536):
+    def __init__(self, preload=32, limit=65536):
         self.limit = limit
-        self.tiles_per_raw_image = 64
+        self.tiles_per_raw_image = 16
         self.nfiles_considered = self.limit // self.tiles_per_raw_image
         self.preload = preload
         self.s3 = boto3.client('s3')

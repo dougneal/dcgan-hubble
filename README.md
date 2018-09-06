@@ -16,6 +16,7 @@ Adversarial Network.
 
 ```
 $ python main.py --width 517 --height 257 --epochs 250 --train
+$ python main.py --width 1036 --height 515 --epochs 250 --train
 ```
 
 ## Authors and copyright
