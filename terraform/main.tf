@@ -161,11 +161,11 @@ resource "aws_key_pair" "shared" {
 }
 
 resource "aws_spot_instance_request" "production" {
-  spot_price                      = "4.000"
-  instance_type                   = "p3.8xlarge"
+  spot_price                      = "1.000"
+  instance_type                   = "p3.2xlarge"
   ami                             = "ami-09994a343440ce0cd"
   instance_interruption_behaviour = "stop"
-  valid_until                     = "2018-09-07T10:00:00Z"
+  valid_until                     = "2018-09-09T10:00:00Z"
   spot_type                       = "persistent"
   associate_public_ip_address     = true
   subnet_id                       = "${aws_subnet.public_us-east-1a.id}"
